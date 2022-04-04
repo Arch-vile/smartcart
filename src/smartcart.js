@@ -1258,11 +1258,14 @@ module.exports.shouldPropose = function shouldPropose(deliveryDate, itemLastOrde
 
   // TODO: We can calculate this instead of iterate
   // Find the time range during which we should propose
-  while (deliveryDate > timeRange.end) {
+  while (dateAsMillis(deliveryDate) > timeRange.end) {
     span = span * 1.5;
     timeRange.start = timeRange.end;
     timeRange.end = timeRange.end + span;
   }
+
+  console.log(new Date(timeRange.start));
+  console.log(new Date(timeRange.end));
 
   // Orders done during the time range
   const overlappingOrders = previousOrderDates
