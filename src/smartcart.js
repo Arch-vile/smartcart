@@ -10,7 +10,7 @@ function windowed(size, from) {
 }
 
 function millisToDays(millis) {
-  return Math.floor(millis/1000/86400);
+  return Math.floor(millis / 1000 / 86400);
 }
 
 /**
@@ -62,6 +62,10 @@ async function fetchOrder(orderId) {
 }
 
 // [ {deliveredAt: "2022-03-30T11:00:00+00:00", items: [ "roiskelappa" ]}, ... ]
+/**
+ *
+ * @returns {Promise<{deliveredAt: string, items: string[]}[]>}
+ */
 async function buildOrderHistory() {
   const orderIds = await fetchOrders();
   const orders = orderIds.map(async id => {
@@ -1172,10 +1176,13 @@ const orderHistoryX =
     ];
 
 /**
+ *
+ * Dates of the orders on which item was included. Dates are in ascending order.
+ *
  * Will only include products ordered more than once
  *
- * @param orderHistory
- * @returns {Map<string, [Date]>} Key is item name, and dates when the item was ordered
+ * @param orderHistory {{deliveredAt: string, items: string[]}[]}
+ * @returns {Map<string, [Date]>} Key is item name, and dates when the item was ordered. Dates in ascending order.
  */
 function buildItemHistory(orderHistory) {
   const productOrderHistory = new Map();
@@ -1188,8 +1195,13 @@ function buildItemHistory(orderHistory) {
       productOrderHistory.get(item).push(date);
     });
   });
+
+  const daysSorted = mapMap(productOrderHistory, (key, value) => {
+    return value.sort((a, b) => a - b)
+  });
+
   // Only include products ordered more than once
-  return new Map([...productOrderHistory].filter( ([k,v]) => v.length > 1));
+  return new Map([...daysSorted].filter(([k, v]) => v.length > 1));
 }
 
 /**
@@ -1199,13 +1211,14 @@ function buildItemHistory(orderHistory) {
  * @param itemHistory {Map<string, [Date]>}
  * @returns {Map<string, number>} Frequency for item in days
  */
-function calculateItemFrequency(itemHistory) {
-  const frequences = [...itemHistory].map( ([ name, dates ]) => {
+function calculateItemFrequencies(itemHistory) {
+  const frequences = [...itemHistory].map(([name, dates]) => {
     const itemDays = dates.sort((a, b) => a - b);
-    const orderFrequences = windowed(2, itemDays).map(pair => (pair[1] - pair[0]));
+    const orderFrequences = windowed(2, itemDays).map(
+        pair => (pair[1] - pair[0]));
     return [name, millisToDays(weightedAverage(orderFrequences))];
   });
- return new Map(frequences);
+  return new Map(frequences);
 }
 
 /**
@@ -1215,12 +1228,12 @@ function calculateItemFrequency(itemHistory) {
  * @returns {Map<string, number>} Time in days when the item was last ordered
  */
 function latestItemOrders(itemHistory) {
-   const lastOrders = [...itemHistory]
+  const lastOrders = [...itemHistory]
   .map(([name, dates]) => {
-    const lastOrder = dates.sort((a,b) => b-a)[0];
+    const lastOrder = dates.sort((a, b) => b - a)[0];
     return [name, lastOrder];
   });
-   return new Map(lastOrders);
+  return new Map(lastOrders);
 }
 
 /**
@@ -1248,7 +1261,8 @@ function daysAsMillis(days) {
  * @param itemFrequency {number} In days what is the item order frequency
  * @param previousOrderDates {Date[]} Dates of previous orders
  */
-module.exports.shouldPropose = function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency, previousOrderDates) {
+function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
+    previousOrderDates) {
 
   let span = daysAsMillis(itemFrequency);
   const timeRange = {
@@ -1264,9 +1278,6 @@ module.exports.shouldPropose = function shouldPropose(deliveryDate, itemLastOrde
     timeRange.end = timeRange.end + span;
   }
 
-  console.log(new Date(timeRange.start));
-  console.log(new Date(timeRange.end));
-
   // Orders done during the time range
   const overlappingOrders = previousOrderDates
   .map(it => dateAsMillis(it))
@@ -1278,38 +1289,22 @@ module.exports.shouldPropose = function shouldPropose(deliveryDate, itemLastOrde
 }
 
 /**
- * User would likely want to order an item now if both
- * a) The last order for the item is older than item order frequency
- * b) But the last order of item is not too old
- *
- * For example let's say you ordered bananas on first and second week of
- * 2022. That would give bananas a one week frequency. But it is now already
- * April of 2022 so you have not ordered those bananas in a long time. Given
- * this data, you likely do not like to order bananas each week, though you
- * once did so.
  *
  *
- * @param itemFrequences
- * @param itemLastOrders
+ * @param itemFrequences {Map<string,number>}
+ * @param itemLastOrders {Map<string, Date>]}
  */
 function toBeOrdered(itemFrequences, itemLastOrders) {
 
   const now = new Date();
 
   const toBeOrdered = [...itemLastOrders]
-  .filter( ([name, lastOrder]) => {
-    const sinceLastOrder =  millisToDays(now-lastOrder);
+  .filter(([name, lastOrder]) => {
+    const sinceLastOrder = millisToDays(now - lastOrder);
     const orderFrequency = itemFrequences.get(name);
-
-
-
-
 
     // How many times we have missed the expected frequency
     const missed = sinceLastOrder / orderFrequency
-
-
-
 
     // It is due for ordering by frequency
     const isDue = sinceLastOrder > itemFrequences.get(name);
@@ -1317,18 +1312,50 @@ function toBeOrdered(itemFrequences, itemLastOrders) {
     // And this is a recently ordered item
     const isRelevant = sinceLastOrder < itemFrequences.get(name) * 3;
 
-    console.log(`${name} since last order ${sinceLastOrder} and frequency ${itemFrequences.get(name)}`)
+    console.log(
+        `${name} since last order ${sinceLastOrder} and frequency ${itemFrequences.get(
+            name)}`)
 
     return isDue && isRelevant;
-  } )
-  .map( ([name, lastOrder]) => {
-    const sinceLastOrder =  millisToDays(now-lastOrder);
+  })
+  .map(([name, lastOrder]) => {
+    const sinceLastOrder = millisToDays(now - lastOrder);
     return [name, sinceLastOrder];
   });
 
   return new Map(toBeOrdered);
 
 }
+
+/**
+ *
+ *
+ * @param deliveryDate {Date} Delivery date for current order
+ * @param itemsOrderHistory {Map<string,Date[]>} Order history for each item
+ * @param itemFrequencies {Map<string,number>} Calculated frequency for each item
+ * @param previousOrderDates {Date[]} Dates of previous orders
+ * @returns {Map<string,boolean>}
+ */
+function proposedItems(deliveryDate, itemsOrderHistory, itemFrequencies,
+    previousOrderDates) {
+  const results = mapMap(itemsOrderHistory, (name, dates) => {
+    return shouldPropose(deliveryDate, dates[dates.length - 1],
+        itemFrequencies.get(name), previousOrderDates)
+  })
+  return new Map([...results].filter(([key, value]) => value === true))
+}
+
+const itemHistory = buildItemHistory(orderHistoryX);
+const itemFrequencies = calculateItemFrequencies(itemHistory);
+const previousOrderDates = orderHistoryX
+.map(it => it.deliveredAt)
+.map(it => new Date(it));
+const toBeProposed = proposedItems(new Date(), itemHistory, itemFrequencies,
+    previousOrderDates);
+console.log(toBeProposed.keys());
+
+// Just for testing
+module.exports.shouldPropose = shouldPropose;
 
 // const itemHistory = buildItemHistory(orderHistoryX);
 // const itemFrequency = calculateItemFrequency(itemHistory);
@@ -1338,11 +1365,6 @@ function toBeOrdered(itemFrequences, itemLastOrders) {
 //
 // console.log(nextCart);
 
-
-
-
-
-
-
-
-
+function mapMap(map, fn) {
+  return new Map(Array.from(map, ([key, value]) => [key, fn(key, value, map)]));
+}
