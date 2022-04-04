@@ -1224,6 +1224,57 @@ function latestItemOrders(itemHistory) {
 }
 
 /**
+ *
+ * @param date {Date}
+ * @returns {number}
+ */
+function dateAsMillis(date) {
+  return date.getTime();
+}
+
+/**
+ *
+ * @param days {number}
+ * @returns {number}
+ */
+function daysAsMillis(days) {
+  return days * 86400 * 1000;
+}
+
+/**
+ *
+ * @param deliveryDate {Date} Delivery date for the current order
+ * @param itemLastOrderDate {Date} Date when the item was last ordered
+ * @param itemFrequency {number} In days what is the item order frequency
+ * @param previousOrderDates {Date[]} Dates of previous orders
+ */
+module.exports.shouldPropose = function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency, previousOrderDates) {
+
+  let span = daysAsMillis(itemFrequency);
+  const timeRange = {
+    start: dateAsMillis(itemLastOrderDate),
+    end: dateAsMillis(itemLastOrderDate) + span
+  };
+
+  // TODO: We can calculate this instead of iterate
+  // Find the time range during which we should propose
+  while (deliveryDate > timeRange.end) {
+    span = span * 1.5;
+    timeRange.start = timeRange.end;
+    timeRange.end = timeRange.end + span;
+  }
+
+  // Orders done during the time range
+  const overlappingOrders = previousOrderDates
+  .map(it => dateAsMillis(it))
+  .filter(it => it > timeRange.start && it <= timeRange.end);
+
+  // If no orders yet done during the time span, we should propose item for this order
+  // If there already has been an order, we have proposed the item on that one already
+  return overlappingOrders.length === 0;
+}
+
+/**
  * User would likely want to order an item now if both
  * a) The last order for the item is older than item order frequency
  * b) But the last order of item is not too old
@@ -1245,6 +1296,17 @@ function toBeOrdered(itemFrequences, itemLastOrders) {
   const toBeOrdered = [...itemLastOrders]
   .filter( ([name, lastOrder]) => {
     const sinceLastOrder =  millisToDays(now-lastOrder);
+    const orderFrequency = itemFrequences.get(name);
+
+
+
+
+
+    // How many times we have missed the expected frequency
+    const missed = sinceLastOrder / orderFrequency
+
+
+
 
     // It is due for ordering by frequency
     const isDue = sinceLastOrder > itemFrequences.get(name);
@@ -1265,13 +1327,13 @@ function toBeOrdered(itemFrequences, itemLastOrders) {
 
 }
 
-const itemHistory = buildItemHistory(orderHistoryX);
-const itemFrequency = calculateItemFrequency(itemHistory);
-const itemLastOrders = latestItemOrders(itemHistory);
-const nextCart = toBeOrdered(itemFrequency, itemLastOrders);
-
-
-console.log(nextCart);
+// const itemHistory = buildItemHistory(orderHistoryX);
+// const itemFrequency = calculateItemFrequency(itemHistory);
+// const itemLastOrders = latestItemOrders(itemHistory);
+// const nextCart = toBeOrdered(itemFrequency, itemLastOrders);
+//
+//
+// console.log(nextCart);
 
 
 
