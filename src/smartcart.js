@@ -1393,6 +1393,7 @@ function collectOrderDates(orderHistory) {
   .map(it => new Date(it));
 }
 
+
 function runBookmarklet() {
   buildOrderHistory()
   .then(orderHistory => {
@@ -1400,10 +1401,69 @@ function runBookmarklet() {
     const itemFrequencies = calculateItemFrequencies(itemHistories);
     const orderDates = collectOrderDates(orderHistory);
 
-    const proposals = proposedItems(new Date(Date.parse("2022-04-12")),
+    // TODO: Use the delivery date
+    const proposed = proposedItems(new Date(Date.parse("2022-04-12")),
         itemHistories, itemFrequencies,
         orderDates)
-
-    console.log(proposals);
+    updateUI(proposed);
   });
 }
+
+/**
+ *
+ * @param itemsForNextOrder {string[]}
+ */
+function updateUI(itemsForNextOrder) {
+
+  // Remove the previously created html
+  const previousHtml = document.getElementById("smartCart");
+  if(previousHtml) previousHtml.remove();
+
+  const currentShoppingItems = Array.from(document.querySelectorAll(
+      ".shopping-list-item .product-result-name-content .product-name SPAN"))
+  .map(it => it.innerHTML);
+
+  const itemsToPropose = itemsForNextOrder.filter(
+      it =>currentShoppingItems.indexOf(it) === -1);
+
+  const newProposalsHtml = proposalsHTML(proposalItemsHtml(itemsToPropose));
+  shoppingListDepartmentsContainer().prepend(htmlToElement(newProposalsHtml));
+
+  //
+  // Private functions
+  //
+  function htmlToElement(html) {
+    var template = document.createElement('template');
+    html = html.trim(); // Never return a text node of whitespace as the result
+    template.innerHTML = html;
+    return template.content.firstChild;
+  }
+
+  function shoppingListDepartmentsContainer() {
+    return document.querySelector(
+        '#shopping-basket-element > section > div > div.shopping-list-shopping-content > ul');
+  }
+
+  /**
+   *
+   * @param items {string[]}
+   */
+  function proposalItemsHtml(items) {
+    return items.map(item => `<li>${item}</li>`).join('');
+  }
+
+  function proposalsHTML(itemsHtml) {
+    return `
+<li id="smartCart" class="shopping-list-department">
+  <h3 class="department-heading">
+    <span>Muista myös nämä</span>
+  </h3>
+  <ul class="shopping-list-items department-item-listing">
+    <li><ul style="padding-left: 1em; list-style-type:circle; list-style-position: inside;">${itemsHtml}</ul></li>
+  </ul>
+</li>
+`;
+  }
+
+}
+
