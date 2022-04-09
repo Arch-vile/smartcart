@@ -1265,7 +1265,8 @@ function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
   const F_LEEWAY = 0.8;
 
   // We should not propose if time since last item order is less than frequency
-  if(dateAsMillis(deliveryDate) - dateAsMillis(itemLastOrderDate) < F_LEEWAY*daysAsMillis(itemFrequency)) {
+  if (dateAsMillis(deliveryDate) - dateAsMillis(itemLastOrderDate) < F_LEEWAY
+      * daysAsMillis(itemFrequency)) {
     return false;
   }
 
@@ -1289,7 +1290,8 @@ function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
   .filter(it => it > timeRange.start && it <= timeRange.end)
 
   // But let's not consider orders that are too close to when we last ordered the item
-    const foo = overlappingOrders.filter(it => it - dateAsMillis(itemLastOrderDate) > span);
+  const foo = overlappingOrders.filter(
+      it => it - dateAsMillis(itemLastOrderDate) > span);
 
   // If no orders yet done during the time span, we should propose item for this order
   // If there already has been an order, we have proposed the item on that one already
@@ -1350,9 +1352,9 @@ function proposedItems(deliveryDate, itemsOrderHistory, itemFrequencies,
     return shouldPropose(deliveryDate, dates[dates.length - 1],
         itemFrequencies.get(name), previousOrderDates)
   })
-  return [...results].filter(([key, value]) => value === true).map(([key, value]) => key);
+  return [...results].filter(([key, value]) => value === true).map(
+      ([key, value]) => key);
 }
-
 
 // const itemHistory = buildItemHistory(orderHistoryX);
 // console.log(itemHistory);
@@ -1386,19 +1388,22 @@ function mapMap(map, fn) {
  * @return {Date[]}
  */
 function collectOrderDates(orderHistory) {
-return orderHistory
-.map(it => it.deliveredAt)
-.map(it => new Date(it));
+  return orderHistory
+  .map(it => it.deliveredAt)
+  .map(it => new Date(it));
 }
 
-buildOrderHistory()
-.then(orderHistory => {
-  const itemHistories = buildItemHistory(orderHistory);
-  const itemFrequencies = calculateItemFrequencies(itemHistories);
-  const orderDates = collectOrderDates(orderHistory);
+function runBookmarklet() {
+  buildOrderHistory()
+  .then(orderHistory => {
+    const itemHistories = buildItemHistory(orderHistory);
+    const itemFrequencies = calculateItemFrequencies(itemHistories);
+    const orderDates = collectOrderDates(orderHistory);
 
-  const proposals = proposedItems(new Date(Date.parse("2022-04-12")), itemHistories, itemFrequencies,
-      orderDates)
+    const proposals = proposedItems(new Date(Date.parse("2022-04-12")),
+        itemHistories, itemFrequencies,
+        orderDates)
 
-  console.log(proposals);
-});
+    console.log(proposals);
+  });
+}
