@@ -1256,6 +1256,15 @@ function daysAsMillis(days) {
 
 /**
  *
+ * @param arrayOfMs {number[]}
+ * @return {Date[]}
+ */
+function toDates(arrayOfMs) {
+  return arrayOfMs.map(it => new Date(it));
+}
+
+/**
+ *
  * @param deliveryDate {Date} Delivery date for the current order
  * @param itemLastOrderDate {Date} Date when the item was last ordered
  * @param itemFrequency {number} In days what is the item order frequency
@@ -1263,6 +1272,13 @@ function daysAsMillis(days) {
  */
 function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
     previousOrderDates) {
+// How much earlier than frequency we propose the item
+  const F_LEEWAY = 0.8;
+
+  // We should not propose if time since last item order is less than frequency
+  if(dateAsMillis(deliveryDate) - dateAsMillis(itemLastOrderDate) < F_LEEWAY*daysAsMillis(itemFrequency)) {
+    return false;
+  }
 
   let span = daysAsMillis(itemFrequency);
   const timeRange = {
@@ -1281,11 +1297,16 @@ function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
   // Orders done during the time range
   const overlappingOrders = previousOrderDates
   .map(it => dateAsMillis(it))
-  .filter(it => it > timeRange.start && it <= timeRange.end);
+  .filter(it => it > timeRange.start && it <= timeRange.end)
+
+  console.log(toDates(overlappingOrders));
+  // But let's not consider orders that are too close to when we last ordered the item
+    const foo = overlappingOrders.filter(it => it - dateAsMillis(itemLastOrderDate) > span);
+  console.log(toDates(foo));
 
   // If no orders yet done during the time span, we should propose item for this order
   // If there already has been an order, we have proposed the item on that one already
-  return overlappingOrders.length === 0;
+  return foo.length === 0;
 }
 
 /**
@@ -1345,12 +1366,16 @@ function proposedItems(deliveryDate, itemsOrderHistory, itemFrequencies,
   return new Map([...results].filter(([key, value]) => value === true))
 }
 
+
+
 const itemHistory = buildItemHistory(orderHistoryX);
+console.log(itemHistory);
 const itemFrequencies = calculateItemFrequencies(itemHistory);
+console.log(itemFrequencies);
 const previousOrderDates = orderHistoryX
 .map(it => it.deliveredAt)
 .map(it => new Date(it));
-const toBeProposed = proposedItems(new Date(), itemHistory, itemFrequencies,
+const toBeProposed = proposedItems(new Date(Date.parse('2022-04-08T10:00:00+00:00')), itemHistory, itemFrequencies,
     previousOrderDates);
 console.log(toBeProposed.keys());
 
