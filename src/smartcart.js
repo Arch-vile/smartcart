@@ -1,7 +1,3 @@
-function test() {
-  console.log('it works');
-}
-
 function windowed(size, from) {
   return from.flatMap((_, i) =>
       i <= from.length - size
@@ -73,13 +69,6 @@ async function buildOrderHistory() {
   });
   return await Promise.all(orders);
 }
-
-// var theHistory;
-// buildHistory().then(it => {
-//     console.log(it);
-//     theHistory = it;
-// });
-//
 
 const orderHistoryX =
     [
@@ -1299,10 +1288,8 @@ function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
   .map(it => dateAsMillis(it))
   .filter(it => it > timeRange.start && it <= timeRange.end)
 
-  console.log(toDates(overlappingOrders));
   // But let's not consider orders that are too close to when we last ordered the item
     const foo = overlappingOrders.filter(it => it - dateAsMillis(itemLastOrderDate) > span);
-  console.log(toDates(foo));
 
   // If no orders yet done during the time span, we should propose item for this order
   // If there already has been an order, we have proposed the item on that one already
@@ -1355,7 +1342,7 @@ function toBeOrdered(itemFrequences, itemLastOrders) {
  * @param itemsOrderHistory {Map<string,Date[]>} Order history for each item
  * @param itemFrequencies {Map<string,number>} Calculated frequency for each item
  * @param previousOrderDates {Date[]} Dates of previous orders
- * @returns {Map<string,boolean>}
+ * @returns {string[]>}
  */
 function proposedItems(deliveryDate, itemsOrderHistory, itemFrequencies,
     previousOrderDates) {
@@ -1363,24 +1350,23 @@ function proposedItems(deliveryDate, itemsOrderHistory, itemFrequencies,
     return shouldPropose(deliveryDate, dates[dates.length - 1],
         itemFrequencies.get(name), previousOrderDates)
   })
-  return new Map([...results].filter(([key, value]) => value === true))
+  return [...results].filter(([key, value]) => value === true).map(([key, value]) => key);
 }
 
 
-
-const itemHistory = buildItemHistory(orderHistoryX);
-console.log(itemHistory);
-const itemFrequencies = calculateItemFrequencies(itemHistory);
-console.log(itemFrequencies);
-const previousOrderDates = orderHistoryX
-.map(it => it.deliveredAt)
-.map(it => new Date(it));
-const toBeProposed = proposedItems(new Date(Date.parse('2022-04-08T10:00:00+00:00')), itemHistory, itemFrequencies,
-    previousOrderDates);
-console.log(toBeProposed.keys());
+// const itemHistory = buildItemHistory(orderHistoryX);
+// console.log(itemHistory);
+// const itemFrequencies = calculateItemFrequencies(itemHistory);
+// console.log(itemFrequencies);
+// const previousOrderDates = orderHistoryX
+// .map(it => it.deliveredAt)
+// .map(it => new Date(it));
+// const toBeProposed = proposedItems(new Date(Date.parse('2022-04-08T10:00:00+00:00')), itemHistory, itemFrequencies,
+//     previousOrderDates);
+// console.log(toBeProposed.keys());
 
 // Just for testing
-module.exports.shouldPropose = shouldPropose;
+// module.exports.shouldPropose = shouldPropose;
 
 // const itemHistory = buildItemHistory(orderHistoryX);
 // const itemFrequency = calculateItemFrequency(itemHistory);
@@ -1393,3 +1379,26 @@ module.exports.shouldPropose = shouldPropose;
 function mapMap(map, fn) {
   return new Map(Array.from(map, ([key, value]) => [key, fn(key, value, map)]));
 }
+
+/**
+ *
+ * @param orderHistory
+ * @return {Date[]}
+ */
+function collectOrderDates(orderHistory) {
+return orderHistory
+.map(it => it.deliveredAt)
+.map(it => new Date(it));
+}
+
+buildOrderHistory()
+.then(orderHistory => {
+  const itemHistories = buildItemHistory(orderHistory);
+  const itemFrequencies = calculateItemFrequencies(itemHistories);
+  const orderDates = collectOrderDates(orderHistory);
+
+  const proposals = proposedItems(new Date(Date.parse("2022-04-12")), itemHistories, itemFrequencies,
+      orderDates)
+
+  console.log(proposals);
+});
