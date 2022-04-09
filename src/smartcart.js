@@ -1393,7 +1393,6 @@ function collectOrderDates(orderHistory) {
   .map(it => new Date(it));
 }
 
-
 function runBookmarklet() {
   buildOrderHistory()
   .then(orderHistory => {
@@ -1405,7 +1404,11 @@ function runBookmarklet() {
     const proposed = proposedItems(new Date(Date.parse("2022-04-12")),
         itemHistories, itemFrequencies,
         orderDates)
-    updateUI(proposed);
+
+    // Start the UI update loop
+    setInterval(() => {
+      updateUI(proposed);
+    },500);
   });
 }
 
@@ -1417,14 +1420,16 @@ function updateUI(itemsForNextOrder) {
 
   // Remove the previously created html
   const previousHtml = document.getElementById("smartCart");
-  if(previousHtml) previousHtml.remove();
+  if (previousHtml) {
+    previousHtml.remove();
+  }
 
   const currentShoppingItems = Array.from(document.querySelectorAll(
       ".shopping-list-item .product-result-name-content .product-name SPAN"))
   .map(it => it.innerHTML);
 
   const itemsToPropose = itemsForNextOrder.filter(
-      it =>currentShoppingItems.indexOf(it) === -1);
+      it => currentShoppingItems.indexOf(it) === -1);
 
   const newProposalsHtml = proposalsHTML(proposalItemsHtml(itemsToPropose));
   shoppingListDepartmentsContainer().prepend(htmlToElement(newProposalsHtml));
