@@ -37,9 +37,19 @@ async function fetchOrders() {
   return fetch(url)
   .then(resp => resp.json())
   .then(payload => {
-    return payload.data
-    .filter(order => order.orderStatus === 'ORDER_PROCESSED')
+    const nextOrders = payload.data
+    .filter(order => order.orderStatus === 'ORDER_RECEIVED')
+    .sort((a, b) =>
+        Date.parse(b.deliveryTime.deliveryStart) -
+        Date.parse(a.deliveryTime.deliveryStart))
     .map(order => order.orderId);
+
+    return {
+      processed: payload.data
+      .filter(order => order.orderStatus === 'ORDER_PROCESSED')
+      .map(order => order.orderId),
+      next: nextOrders.length !== 0 ? nextOrders[0] : null
+    };
   });
 }
 
@@ -51,19 +61,18 @@ async function fetchOrder(orderId) {
     const delivered = data.deliveryTime.deliveryEnd;
     const itemNames = data.items.map(item => item.name);
     return {
-      deliveredAt: delivered,
+      deliveryAt: delivered,
       items: itemNames
     }
   });
 }
 
-// [ {deliveredAt: "2022-03-30T11:00:00+00:00", items: [ "roiskelappa" ]}, ... ]
+// [ {deliveryAt: "2022-03-30T11:00:00+00:00", items: [ "roiskelappa" ]}, ... ]
 /**
- *
- * @returns {Promise<{deliveredAt: string, items: string[]}[]>}
+ * @param forOrders {string[]} Order IDs for which to fetch items and build history
+ * @returns {Promise<{deliveryAt: string, items: string[]}[]>}
  */
-async function buildOrderHistory() {
-  const orderIds = await fetchOrders();
+async function buildOrderHistory(orderIds) {
   const orders = orderIds.map(async id => {
     return await fetchOrder(id);
   });
@@ -73,7 +82,7 @@ async function buildOrderHistory() {
 const orderHistoryX =
     [
       {
-        "deliveredAt": "2022-03-30T11:00:00+00:00",
+        "deliveryAt": "2022-03-30T11:00:00+00:00",
         "items": [
           "Saarioinen Valkosipulisalaattikastike 345ml",
           "Sevan hummus 275g original",
@@ -137,7 +146,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-03-23T15:00:00+00:00",
+        "deliveryAt": "2022-03-23T15:00:00+00:00",
         "items": [
           "Sevan hummus 275g original",
           "Saarioinen Valkosipulisalaattikastike 345ml",
@@ -203,7 +212,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-03-16T19:00:00+00:00",
+        "deliveryAt": "2022-03-16T19:00:00+00:00",
         "items": [
           "Sevan hummus 275g original",
           "Bonduelle Erittäin hienoja herneitä 400g/280g",
@@ -265,7 +274,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-03-09T12:00:00+00:00",
+        "deliveryAt": "2022-03-09T12:00:00+00:00",
         "items": [
           "Sevan hummus 275g original",
           "Bonduelle Erittäin hienoja herneitä 400g/280g",
@@ -334,7 +343,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-03-02T19:00:00+00:00",
+        "deliveryAt": "2022-03-02T19:00:00+00:00",
         "items": [
           "Sevan hummus 275g original",
           "Pirkka sitruunanmakuinen kivennäisvesi 1,5l",
@@ -379,7 +388,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-02-24T15:00:00+00:00",
+        "deliveryAt": "2022-02-24T15:00:00+00:00",
         "items": [
           "Sevan hummus 275g original",
           "Pirkka sitruunanmakuinen kivennäisvesi 1,5l",
@@ -452,7 +461,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-02-19T16:00:00+00:00",
+        "deliveryAt": "2022-02-19T16:00:00+00:00",
         "items": [
           "Sensodyne Original hammastahna 75ml",
           "Elmex Junior hammastahna 75ml 6-12 vuotiaille",
@@ -494,7 +503,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-02-15T15:00:00+00:00",
+        "deliveryAt": "2022-02-15T15:00:00+00:00",
         "items": [
           "Sevan hummus 275g original",
           "Pirkka sitruunanmakuinen kivennäisvesi 1,5l",
@@ -565,7 +574,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-02-09T12:00:00+00:00",
+        "deliveryAt": "2022-02-09T12:00:00+00:00",
         "items": [
           "Barilla Genovese pestokastike 190g",
           "Sevan hummus 275g original",
@@ -631,7 +640,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-02-02T12:00:00+00:00",
+        "deliveryAt": "2022-02-02T12:00:00+00:00",
         "items": [
           "Kurkku Suomi",
           "Pirkka suippopaprika 200 g / 2 kpl 1 lk",
@@ -686,7 +695,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-01-26T12:00:00+00:00",
+        "deliveryAt": "2022-01-26T12:00:00+00:00",
         "items": [
           "Kurkku Suomi",
           "Pirkka suippopaprika 200 g / 2 kpl 1 lk",
@@ -751,7 +760,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-01-18T12:00:00+00:00",
+        "deliveryAt": "2022-01-18T12:00:00+00:00",
         "items": [
           "Kurkku Suomi",
           "Pirkka suippopaprika 200 g / 2 kpl 1 lk",
@@ -807,7 +816,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2022-01-05T19:00:00+00:00",
+        "deliveryAt": "2022-01-05T19:00:00+00:00",
         "items": [
           "Kurkku Suomi",
           "Pirkka suippopaprika 200 g / 2 kpl 1 lk",
@@ -865,7 +874,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2021-12-30T15:00:00+00:00",
+        "deliveryAt": "2021-12-30T15:00:00+00:00",
         "items": [
           "Dovgan kondensoitu maito 397g makeutettu",
           "Pirkka suomalainen kuohukerma 2dl",
@@ -895,7 +904,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2021-12-23T10:00:00+00:00",
+        "deliveryAt": "2021-12-23T10:00:00+00:00",
         "items": [
           "Pirkka suomalainen täysmaito 1l",
           "Pirkka suomalainen kevytmaito 1l",
@@ -976,7 +985,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2021-12-14T19:00:00+00:00",
+        "deliveryAt": "2021-12-14T19:00:00+00:00",
         "items": [
           "Paulúns 450g hasselpähkinä ja taateli granola muromysli",
           "Kurkku Suomi",
@@ -1047,7 +1056,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2021-11-30T15:00:00+00:00",
+        "deliveryAt": "2021-11-30T15:00:00+00:00",
         "items": [
           "Pirkka suomalainen makea friseesalaatti 100g",
           "Pirkka vapaan kanan munia 10 kpl / 580g",
@@ -1094,7 +1103,7 @@ const orderHistoryX =
         ]
       },
       {
-        "deliveredAt": "2021-11-23T19:00:00+00:00",
+        "deliveryAt": "2021-11-23T19:00:00+00:00",
         "items": [
           "Pirkka peanut butter crunchy 350g",
           "Sevan hummus 275g original",
@@ -1170,13 +1179,13 @@ const orderHistoryX =
  *
  * Will only include products ordered more than once
  *
- * @param orderHistory {{deliveredAt: string, items: string[]}[]}
+ * @param orderHistory {{deliveryAt: string, items: string[]}[]}
  * @returns {Map<string, [Date]>} Key is item name, and dates when the item was ordered. Dates in ascending order.
  */
 function buildItemHistory(orderHistory) {
   const productOrderHistory = new Map();
   orderHistory.forEach(order => {
-    const date = new Date(order.deliveredAt);
+    const date = new Date(order.deliveryAt);
     order.items.forEach(item => {
       if (!productOrderHistory.get(item)) {
         productOrderHistory.set(item, []);
@@ -1361,7 +1370,7 @@ function proposedItems(deliveryDate, itemsOrderHistory, itemFrequencies,
 // const itemFrequencies = calculateItemFrequencies(itemHistory);
 // console.log(itemFrequencies);
 // const previousOrderDates = orderHistoryX
-// .map(it => it.deliveredAt)
+// .map(it => it.deliveryAt)
 // .map(it => new Date(it));
 // const toBeProposed = proposedItems(new Date(Date.parse('2022-04-08T10:00:00+00:00')), itemHistory, itemFrequencies,
 //     previousOrderDates);
@@ -1389,26 +1398,35 @@ function mapMap(map, fn) {
  */
 function collectOrderDates(orderHistory) {
   return orderHistory
-  .map(it => it.deliveredAt)
+  .map(it => it.deliveryAt)
   .map(it => new Date(it));
 }
 
+async function buildProposals() {
+  const orderIds = await fetchOrders();
+  const orderHistory = await buildOrderHistory(orderIds.processed);
+  const nextOrderDateString = (await fetchOrder(orderIds.next)).deliveryAt;
+  const nextOrderDate = nextOrderDateString ? new Date(
+      Date.parse(nextOrderDateString)) : new Date();
+  const itemHistories = buildItemHistory(orderHistory);
+  const itemFrequencies = calculateItemFrequencies(itemHistories);
+  const orderDates = collectOrderDates(orderHistory);
+
+  return proposedItems(
+      nextOrderDate,
+      itemHistories,
+      itemFrequencies,
+      orderDates);
+
+}
+
+// Called from the bookmarklet bookmark, the entry point
 function runBookmarklet() {
-  buildOrderHistory()
-  .then(orderHistory => {
-    const itemHistories = buildItemHistory(orderHistory);
-    const itemFrequencies = calculateItemFrequencies(itemHistories);
-    const orderDates = collectOrderDates(orderHistory);
-
-    // TODO: Use the delivery date
-    const proposed = proposedItems(new Date(Date.parse("2022-04-12")),
-        itemHistories, itemFrequencies,
-        orderDates)
-
+  buildProposals().then(proposals => {
     // Start the UI update loop
     setInterval(() => {
-      updateUI(proposed);
-    },500);
+      updateUI(proposals);
+    }, 500);
   });
 }
 
