@@ -1180,7 +1180,7 @@ const orderHistoryX =
  * Will only include products ordered more than once
  *
  * @param orderHistory {{deliveryAt: string, items: string[]}[]}
- * @returns {Map<string, [Date]>} Key is item name, and dates when the item was ordered. Dates in ascending order.
+ * @returns {Map<string, Date[]>} Key is item name, and dates when the item was ordered. Dates in ascending order.
  */
 function buildItemHistory(orderHistory) {
   const productOrderHistory = new Map();
@@ -1209,29 +1209,14 @@ function buildItemHistory(orderHistory) {
  * @param itemHistory {Map<string, [Date]>}
  * @returns {Map<string, number>} Frequency for item in days
  */
-function calculateItemFrequencies(itemHistory) {
-  const frequences = [...itemHistory].map(([name, dates]) => {
-    const itemDays = dates.sort((a, b) => a - b);
+function calculateItemFrequencies(itemHistory: Map<string, Date[]>) {
+  const frequences = mapMap(itemHistory, (name, dates) => {
+    const itemDays = dates.sort((a, b) => a.getTime() - b.getTime());
     const orderFrequences = windowed(2, itemDays).map(
         pair => (pair[1] - pair[0]));
-    return [name, millisToDays(weightedAverage(orderFrequences))];
+    return millisToDays(weightedAverage(orderFrequences));
   });
   return new Map(frequences);
-}
-
-/**
- * For each item, how long ago (in days) was it last ordered
- *
- * @param itemHistory {Map<string, [Date]>} Key is item name, and dates when the item was ordered
- * @returns {Map<string, number>} Time in days when the item was last ordered
- */
-function latestItemOrders(itemHistory) {
-  const lastOrders = [...itemHistory]
-  .map(([name, dates]) => {
-    const lastOrder = dates.sort((a, b) => b - a)[0];
-    return [name, lastOrder];
-  });
-  return new Map(lastOrders);
 }
 
 /**
@@ -1307,44 +1292,6 @@ function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
   return foo.length === 0;
 }
 
-/**
- *
- *
- * @param itemFrequences {Map<string,number>}
- * @param itemLastOrders {Map<string, Date>]}
- */
-function toBeOrdered(itemFrequences, itemLastOrders) {
-
-  const now = new Date();
-
-  const toBeOrdered = [...itemLastOrders]
-  .filter(([name, lastOrder]) => {
-    const sinceLastOrder = millisToDays(now - lastOrder);
-    const orderFrequency = itemFrequences.get(name);
-
-    // How many times we have missed the expected frequency
-    const missed = sinceLastOrder / orderFrequency
-
-    // It is due for ordering by frequency
-    const isDue = sinceLastOrder > itemFrequences.get(name);
-
-    // And this is a recently ordered item
-    const isRelevant = sinceLastOrder < itemFrequences.get(name) * 3;
-
-    console.log(
-        `${name} since last order ${sinceLastOrder} and frequency ${itemFrequences.get(
-            name)}`)
-
-    return isDue && isRelevant;
-  })
-  .map(([name, lastOrder]) => {
-    const sinceLastOrder = millisToDays(now - lastOrder);
-    return [name, sinceLastOrder];
-  });
-
-  return new Map(toBeOrdered);
-
-}
 
 /**
  *
@@ -1355,7 +1302,7 @@ function toBeOrdered(itemFrequences, itemLastOrders) {
  * @param previousOrderDates {Date[]} Dates of previous orders
  * @returns {string[]>}
  */
-function proposedItems(deliveryDate, itemsOrderHistory, itemFrequencies,
+function proposedItems(deliveryDate, itemsOrderHistory: Map<string, Date[]>, itemFrequencies,
     previousOrderDates) {
   const results = mapMap(itemsOrderHistory, (name, dates) => {
     return shouldPropose(deliveryDate, dates[dates.length - 1],
@@ -1387,8 +1334,16 @@ function proposedItems(deliveryDate, itemsOrderHistory, itemFrequencies,
 //
 // console.log(nextCart);
 
-function mapMap(map, fn) {
-  return new Map(Array.from(map, ([key, value]) => [key, fn(key, value, map)]));
+function mapMap<K,V,T>(map: Map<K,V>, fn: (k:K, v:V) => T) {
+  return new Map(Array.from(map, ([key, value]) => [key, fn(key, value)]));
+}
+
+function mapToEntries<K,V>(map: Map<K,V>): [K,V][] {
+ return Array.from(map.entries());
+}
+
+function entriesToMap<K,V>(entries: [K, V][]): Map<K,V> {
+ return entries.reduce((acc,next) => acc.set(next[0], next[1]), new Map())
 }
 
 /**

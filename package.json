@@ -1,0 +1,23 @@
+{
+  "name": "smartcart",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Arch-vile/smartcart.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Arch-vile/smartcart/issues"
+  },
+  "homepage": "https://github.com/Arch-vile/smartcart#readme",
+  "dependencies": {
+    "typescript": "^4.6.3"
+  }
+}
