@@ -1,5 +1,5 @@
 import {millisToDays} from "./dateUtils";
-import {fetchOrder, fetchOrders} from "./kruoka/api";
+import {fetchOrders, fetchOrder, fetchOrderListing, Order, Item} from "./kruoka/api";
 
 function windowed(size, from) {
   return from.flatMap((_, i) =>
@@ -22,40 +22,28 @@ function weightedAverage(from) {
   return result.sum / result.count;
 }
 
-/**
- * @param forOrders {string[]} Order IDs for which to fetch items and build history
- * @returns {Promise<{deliveryAt: string, items: string[]}[]>}
- */
-async function buildOrderHistory(orderIds) {
-  const orders = orderIds.map(async id => {
-    return await fetchOrder(id);
-  });
-  return await Promise.all(orders);
-}
 
 /**
  *
  * Dates of the orders on which item was included. Dates are in ascending order.
+ * Item name used as key.
  *
  * Will only include products ordered more than once
  *
- * @param orderHistory {{deliveryAt: string, items: string[]}[]}
- * @returns {Map<string, Date[]>} Key is item name, and dates when the item was ordered. Dates in ascending order.
  */
-function buildItemHistory(orderHistory) {
-  const productOrderHistory = new Map();
+function buildItemHistory(orderHistory: Order[]): Map<string, Date[]> {
+  const productOrderHistory = new Map<string,Date[]>();
   orderHistory.forEach(order => {
-    const date = new Date(order.deliveryAt);
     order.items.forEach(item => {
-      if (!productOrderHistory.get(item)) {
-        productOrderHistory.set(item, []);
+      if (!productOrderHistory.get(item.name)) {
+        productOrderHistory.set(item.name, []);
       }
-      productOrderHistory.get(item).push(date);
+      productOrderHistory.get(item.name).push(order.info.deliveryAt);
     });
   });
 
   const daysSorted = mapMap(productOrderHistory, (key, value) => {
-    return value.sort((a, b) => a - b)
+    return value.sort((a, b) => a.getTime() - b.getTime())
   });
 
   // Only include products ordered more than once
@@ -69,7 +57,7 @@ function buildItemHistory(orderHistory) {
  * @param itemHistory {Map<string, [Date]>}
  * @returns {Map<string, number>} Frequency for item in days
  */
-function calculateItemFrequencies(itemHistory: Map<string, Date[]>) {
+function calculateItemFrequencies(itemHistory: Map<string, Date[]>): Map<string, number> {
   const frequences = mapMap(itemHistory, (name, dates) => {
     const itemDays = dates.sort((a, b) => a.getTime() - b.getTime());
     const orderFrequences = windowed(2, itemDays).map(
@@ -114,7 +102,7 @@ function toDates(arrayOfMs) {
  * @param previousOrderDates {Date[]} Dates of previous orders
  */
 function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
-    previousOrderDates) {
+    previousOrderDates): boolean {
 // How much earlier than frequency we propose the item
   const F_LEEWAY = 0.8;
 
@@ -162,14 +150,16 @@ function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
  * @param previousOrderDates {Date[]} Dates of previous orders
  * @returns {string[]>}
  */
-function proposedItems(deliveryDate, itemsOrderHistory: Map<string, Date[]>, itemFrequencies,
-    previousOrderDates) {
+function proposedItems(deliveryDate: Date, itemsOrderHistory: Map<string, Date[]>,
+                       itemFrequencies: Map<string,number>,
+    previousOrderDates: Date[]): string[] {
   const results = mapMap(itemsOrderHistory, (name, dates) => {
     return shouldPropose(deliveryDate, dates[dates.length - 1],
         itemFrequencies.get(name), previousOrderDates)
   })
-  return [...results].filter(([key, value]) => value === true).map(
-      ([key, value]) => key);
+  return mapToEntries(results)
+  .filter(([itemName,shouldPropose]) => shouldPropose === true)
+  .map(([key, value]) => key);
 }
 
 // const itemHistory = buildItemHistory(orderHistoryX);
@@ -206,29 +196,20 @@ function entriesToMap<K,V>(entries: [K, V][]): Map<K,V> {
  return entries.reduce((acc,next) => acc.set(next[0], next[1]), new Map())
 }
 
-/**
- *
- * @param orderHistory
- * @return {Date[]}
- */
-function collectOrderDates(orderHistory) {
-  return orderHistory
-  .map(it => it.deliveryAt)
-  .map(it => new Date(it));
+function collectOrderDates(orderHistory: Order[]): Date[] {
+  return orderHistory.map(it => it.info.deliveryAt)
 }
 
-async function buildProposals() {
-  const orderIds = await fetchOrders();
-  const orderHistory = await buildOrderHistory(orderIds.processed);
-  const nextOrderDateString = (await fetchOrder(orderIds.next)).deliveryAt;
-  const nextOrderDate = nextOrderDateString ? new Date(
-      Date.parse(nextOrderDateString)) : new Date();
-  const itemHistories = buildItemHistory(orderHistory);
+async function buildProposals(): Promise<string[]> {
+  const listing = await fetchOrderListing();
+  const orders = await fetchOrders(listing.processed);
+  const itemHistories = buildItemHistory(orders);
   const itemFrequencies = calculateItemFrequencies(itemHistories);
-  const orderDates = collectOrderDates(orderHistory);
+  const orderDates = collectOrderDates(orders);
 
+  const currentOrderDelivery = listing.next ? listing.next.deliveryAt : new Date();
   return proposedItems(
-      nextOrderDate,
+      currentOrderDelivery,
       itemHistories,
       itemFrequencies,
       orderDates);
