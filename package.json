@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "npm run clean && tsc --build && browserify dist/bookmarklet.js -o public/smartcart-bundle.js -t [ babelify --presets [ @babel/preset-env @babel/preset-react ] --plugins [ @babel/plugin-proposal-class-properties ] ]",
+    "compile": "npm run clean && tsc --build",
+    "bundle": "npm run clean && tsc --build && browserify dist/bookmarklet.js -o public/smartcart-bundle.js -t [ babelify --presets [ @babel/preset-env @babel/preset-react ] --plugins [ @babel/plugin-proposal-class-properties ] ]",
     "clean": "tsc --build --clean"
   },
   "repository": {
