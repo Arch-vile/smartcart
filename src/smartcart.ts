@@ -1,3 +1,5 @@
+import {millisToDays} from "./dateUtils";
+
 function windowed(size, from) {
   return from.flatMap((_, i) =>
       i <= from.length - size
@@ -5,9 +7,6 @@ function windowed(size, from) {
           : []);
 }
 
-function millisToDays(millis) {
-  return Math.floor(millis / 1000 / 86400);
-}
 
 /**
  *
@@ -1376,7 +1375,7 @@ async function buildProposals() {
 }
 
 // Called from the bookmarklet bookmark, the entry point
-function runBookmarklet() {
+export function runBookmarklet() {
   buildProposals().then(proposals => {
     // Start the UI update loop
     setInterval(() => {
