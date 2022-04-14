@@ -6,7 +6,8 @@
   "scripts": {
     "compile": "npm run clean && tsc --build",
     "bundle": "npm run clean && tsc --build && browserify dist/bookmarklet.js -o public/smartcart-bundle.js -t [ babelify --presets [ @babel/preset-env @babel/preset-react ] --plugins [ @babel/plugin-proposal-class-properties ] ]",
-    "clean": "tsc --build --clean"
+    "clean": "tsc --build --clean",
+    "test": "ts-node src/smartcart.spec.ts"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,7 @@
   "homepage": "https://github.com/Arch-vile/smartcart#readme",
   "dependencies": {
     "browserify": "^17.0.0",
+    "ts-node": "^10.7.0",
     "typescript": "^4.6.3"
   },
   "devDependencies": {

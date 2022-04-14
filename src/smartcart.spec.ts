@@ -1,4 +1,4 @@
-const {shouldPropose} = require('./smartcart')
+import {shouldPropose} from './smartcart';
 
 console.log('testing');
 

@@ -101,7 +101,7 @@ function toDates(arrayOfMs) {
  * @param itemFrequency {number} In days what is the item order frequency
  * @param previousOrderDates {Date[]} Dates of previous orders
  */
-function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
+export function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency,
     previousOrderDates): boolean {
 // How much earlier than frequency we propose the item
   const F_LEEWAY = 0.8;
