@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile": "npm run clean && tsc --build",
-    "bundle": "npm run clean && tsc --build && browserify dist/bookmarklet.js -o public/smartcart-bundle.js -t [ babelify --presets [ @babel/preset-env @babel/preset-react ] --plugins [ @babel/plugin-proposal-class-properties ] ]",
-    "clean": "tsc --build --clean",
+    "compile": "npm run clean && ttsc --build",
+    "bundle": "npm run clean && ttsc --build && browserify dist/bookmarklet.js -o public/smartcart-bundle.js -t [ babelify --presets [ @babel/preset-env @babel/preset-react ] --plugins [ @babel/plugin-proposal-class-properties ] ]",
+    "clean": "ttsc --build --clean",
     "test": "ts-node src/smartcart.spec.ts"
   },
   "repository": {
@@ -20,8 +20,10 @@
   },
   "homepage": "https://github.com/Arch-vile/smartcart#readme",
   "dependencies": {
+    "@zerollup/ts-transform-paths": "^1.7.18",
     "browserify": "^17.0.0",
     "ts-node": "^10.7.0",
+    "ttypescript": "^1.5.13",
     "typescript": "^4.6.3"
   },
   "devDependencies": {
@@ -29,6 +31,7 @@
     "@babel/plugin-proposal-class-properties": "^7.16.7",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-react": "^7.16.7",
-    "babelify": "^10.0.0"
+    "babelify": "^10.0.0",
+    "tsconfig-paths": "^3.14.1"
   }
 }

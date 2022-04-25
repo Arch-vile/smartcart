@@ -1,4 +1,4 @@
-import {shouldPropose} from './smartcart';
+import {shouldPropose} from "core/ports/exported/suggestionService";
 
 console.log('testing');
 

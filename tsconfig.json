@@ -1,5 +1,18 @@
 {
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  },
   "compilerOptions": {
+    // Allows us to use "core/something" instead of "src/core/something"
+    "baseUrl": "./src",
+    // We'll need to transform the import paths so that "core/something" becomes "./core/something" in the produced JS files
+    "plugins": [{ "transform": "@zerollup/ts-transform-paths" }],
+    // For transform
+    "paths": {
+      "*": [
+        "*"
+      ],
+    },
     "noImplicitAny": false,
     "noEmitOnError": true,
     "removeComments": false,
