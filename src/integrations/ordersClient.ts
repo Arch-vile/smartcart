@@ -59,7 +59,7 @@ export const createOrderClient = (): OrderDao => {
           orderStatus: orderStatusFrom(json.orderStatus),
           deliveryAt: dateFrom(json.deliveryTime.deliveryEnd),
         },
-        items: json.items.map(jsonItem => {
+        items: (json.items as any[]).map(jsonItem  => {
           const item: Item = {
             name: jsonItem.name
           }
@@ -69,7 +69,7 @@ export const createOrderClient = (): OrderDao => {
     });
   }
 
-  function orderStatusFrom(orderJson): OrderStatus {
+  function orderStatusFrom(orderJson: any): OrderStatus {
     if (isKnownOrderStatus(orderJson.orderStatus)) {
       return orderJson.orderStatus;
     } else {

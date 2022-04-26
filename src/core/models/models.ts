@@ -22,7 +22,7 @@ export interface Item {
 }
 
 export interface OrderListing {
-  current: OrderInfo,
+  current: OrderInfo | null
   previous: OrderInfo[]
 }
 

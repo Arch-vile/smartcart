@@ -23,7 +23,7 @@ export function createSuggestionService(orderDao: OrderDao): SuggestionService {
     const orderDates = collectOrderDates(previousOrders);
 
     const currentOrderDelivery = listing.current ? listing.current.deliveryAt : new Date();
-    return proposedItems(
+    return suggestedItems(
         currentOrderDelivery,
         itemHistories,
         itemFrequencies,
@@ -33,16 +33,18 @@ export function createSuggestionService(orderDao: OrderDao): SuggestionService {
   /**
    *
    *
-   * @param deliveryDate {Date} Delivery date for current order
-   * @param itemsOrderHistory {Map<string,Date[]>} Order history for each item
-   * @param itemFrequencies {Map<string,number>} Calculated frequency for each item
-   * @param previousOrderDates {Date[]} Dates of previous orders
-   * @returns {string[]>}
+   * @param deliveryDate Delivery date for current order
+   * @param itemsOrderHistory Order history for each item
+   * @param itemFrequencies Calculated frequency for each item
+   * @param previousOrderDates Dates of previous orders
+   * @returns Suggested items
    */
-  function proposedItems(deliveryDate: Date, itemsOrderHistory: Map<string, Date[]>,
-                         itemFrequencies: Map<string, number>, previousOrderDates: Date[]): Suggestion[] {
+  function suggestedItems(deliveryDate: Date,
+                         itemsOrderHistory: Map<string, Date[]>,
+                         itemFrequencies: Map<string, number>,
+                         previousOrderDates: Date[]): Suggestion[] {
     const results = mapMap(itemsOrderHistory, (name, dates) => {
-      return shouldPropose(deliveryDate, dates[dates.length - 1], itemFrequencies.get(name), previousOrderDates);
+      return shouldPropose(deliveryDate, dates[dates.length - 1], itemFrequencies.get(name)!, previousOrderDates);
     });
     return mapToEntries(results)
     .filter(([itemName, shouldPropose]) => shouldPropose === true)
@@ -50,8 +52,7 @@ export function createSuggestionService(orderDao: OrderDao): SuggestionService {
     .map(itemName => ({item: {name: itemName}}))
   }
 
-
-  function collectOrderDates(orderHistory) {
+  function collectOrderDates(orderHistory: Order[]): Date[] {
     return orderHistory.map(it => it.info.deliveryAt);
   }
 
@@ -92,7 +93,7 @@ export function createSuggestionService(orderDao: OrderDao): SuggestionService {
         if (!productOrderHistory.get(item.name)) {
           productOrderHistory.set(item.name, []);
         }
-        productOrderHistory.get(item.name).push(order.info.deliveryAt);
+        productOrderHistory.get(item.name)!.push(order.info.deliveryAt);
       });
     });
 
@@ -108,12 +109,15 @@ export function createSuggestionService(orderDao: OrderDao): SuggestionService {
 
 /**
  *
- * @param deliveryDate {Date} Delivery date for the current order
- * @param itemLastOrderDate {Date} Date when the item was last ordered
- * @param itemFrequency {number} In days what is the item order frequency
- * @param previousOrderDates {Date[]} Dates of previous orders
+ * @param deliveryDate  Delivery date for the current order
+ * @param itemLastOrderDate  Date when the item was last ordered
+ * @param itemFrequency  In days what is the item order frequency
+ * @param previousOrderDates  Dates of previous orders
  */
-export function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency, previousOrderDates) {
+export function shouldPropose(deliveryDate: Date,
+                              itemLastOrderDate: Date,
+                              itemFrequency: number,
+                              previousOrderDates: Date[]): boolean  {
   // How much earlier than frequency we propose the item
   const F_LEEWAY = 0.8;
   // We should not propose if time since last item order is less than frequency

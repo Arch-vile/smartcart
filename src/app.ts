@@ -38,23 +38,23 @@ function updateUI(itemsForNextOrder: Suggestion[]) {
   //
   // Private functions
   //
-  function htmlToElement(html) {
+  function htmlToElement(html: string): ChildNode  {
     let template = document.createElement('template');
     html = html.trim(); // Never return a text node of whitespace as the result
     template.innerHTML = html;
-    return template.content.firstChild;
+    return template.content.firstChild!;
   }
 
   function shoppingListDepartmentsContainer() {
     return document.querySelector(
-        '#shopping-basket-element > section > div > div.shopping-list-shopping-content > ul');
+        '#shopping-basket-element > section > div > div.shopping-list-shopping-content > ul')!;
   }
 
-  function proposalItemsHtml(suggestions: Suggestion[]) {
+  function proposalItemsHtml(suggestions: Suggestion[]): string {
     return suggestions.map(suggestion => `<li>${suggestion.item.name}</li>`).join('');
   }
 
-  function proposalsHTML(itemsHtml) {
+  function proposalsHTML(itemsHtml: string) {
     return `
 <li id="smartCart" class="shopping-list-department">
   <h3 class="department-heading">

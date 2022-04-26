@@ -111,13 +111,13 @@ assertFalse(
         [date(2022, 3, 30)]
     ),'shampoo');
 
-function date(year, month, day) {
+function date(year: number, month: number, day: number): Date {
   const dayPad = day < 10 ? '0' : '';
   const monthPad = month < 10 ? '0' : '';
   return new Date(`${year}-${monthPad}${month}-${dayPad}${day}T14:00:00.000+00:00`);
 }
 
-function assertTrue(provider, testName) {
+function assertTrue(provider: () => boolean, testName: string) {
   console.log(`Running ${testName}`);
   if (!provider()) {
     throw Error(`${testName}: Not true`);
@@ -125,7 +125,7 @@ function assertTrue(provider, testName) {
   console.log(`Done ${testName}`);
 }
 
-function assertFalse(provider, testName) {
+function assertFalse(provider: () => boolean, testName: string) {
   console.log(`Running ${testName}`);
   if (provider()) {
     throw Error(`${testName}: Not false`);

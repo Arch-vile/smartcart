@@ -13,7 +13,8 @@
         "*"
       ],
     },
-    "noImplicitAny": false,
+    "noImplicitAny": true,
+    "strict": true,
     "noEmitOnError": true,
     "removeComments": false,
     "sourceMap": true,
