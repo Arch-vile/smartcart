@@ -1,5 +1,5 @@
 import {dateFrom} from "utils/dateUtils"
-import {OrderDao} from "core/ports/imported/orderDao";
+import {OrderDao} from "core/ports/out/orderDao";
 import {
   isKnownOrderStatus,
   Item,
@@ -7,7 +7,7 @@ import {
   OrderInfo,
   OrderListing,
   OrderStatus
-} from "core/models/models";
+} from "core/domain/models";
 
 export const createOrderClient = (): OrderDao => {
   return {

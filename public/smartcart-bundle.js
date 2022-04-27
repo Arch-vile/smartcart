@@ -181,7 +181,7 @@ function createSuggestionService(orderDao) {
               itemFrequencies = calculateItemFrequencies(itemHistories);
               orderDates = collectOrderDates(previousOrders);
               currentOrderDelivery = listing.current ? listing.current.deliveryAt : new Date();
-              return _context.abrupt("return", proposedItems(currentOrderDelivery, itemHistories, itemFrequencies, orderDates));
+              return _context.abrupt("return", suggestedItems(currentOrderDelivery, itemHistories, itemFrequencies, orderDates));
 
             case 11:
             case "end":
@@ -194,15 +194,15 @@ function createSuggestionService(orderDao) {
   /**
    *
    *
-   * @param deliveryDate {Date} Delivery date for current order
-   * @param itemsOrderHistory {Map<string,Date[]>} Order history for each item
-   * @param itemFrequencies {Map<string,number>} Calculated frequency for each item
-   * @param previousOrderDates {Date[]} Dates of previous orders
-   * @returns {string[]>}
+   * @param deliveryDate Delivery date for current order
+   * @param itemsOrderHistory Order history for each item
+   * @param itemFrequencies Calculated frequency for each item
+   * @param previousOrderDates Dates of previous orders
+   * @returns Suggested items
    */
 
 
-  function proposedItems(deliveryDate, itemsOrderHistory, itemFrequencies, previousOrderDates) {
+  function suggestedItems(deliveryDate, itemsOrderHistory, itemFrequencies, previousOrderDates) {
     var results = (0, _collections.mapMap)(itemsOrderHistory, function (name, dates) {
       return shouldPropose(deliveryDate, dates[dates.length - 1], itemFrequencies.get(name), previousOrderDates);
     });
@@ -334,10 +334,10 @@ function createSuggestionService(orderDao) {
 }
 /**
  *
- * @param deliveryDate {Date} Delivery date for the current order
- * @param itemLastOrderDate {Date} Date when the item was last ordered
- * @param itemFrequency {number} In days what is the item order frequency
- * @param previousOrderDates {Date[]} Dates of previous orders
+ * @param deliveryDate  Delivery date for the current order
+ * @param itemLastOrderDate  Date when the item was last ordered
+ * @param itemFrequency  In days what is the item order frequency
+ * @param previousOrderDates  Dates of previous orders
  */
 
 

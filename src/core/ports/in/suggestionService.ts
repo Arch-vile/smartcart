@@ -1,5 +1,5 @@
-import {Order, OrderInfo, Suggestion} from "core/models/models";
-import {OrderDao} from "core/ports/imported/orderDao";
+import {Order, OrderInfo, Suggestion} from "core/domain/models";
+import {OrderDao} from "core/ports/out/orderDao";
 import {dateAsMillis, daysAsMillis, millisToDays} from "utils/dateUtils";
 import {weightedAverage} from "utils/math";
 import {mapMap, mapToEntries, windowed} from "utils/collections";

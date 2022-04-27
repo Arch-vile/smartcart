@@ -1,4 +1,4 @@
-import {shouldPropose} from "core/ports/exported/suggestionService";
+import {shouldPropose} from "core/ports/in/suggestionService";
 
 console.log('testing');
 
