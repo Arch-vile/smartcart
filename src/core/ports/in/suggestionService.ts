@@ -4,7 +4,6 @@ import {dateAsMillis, daysAsMillis, millisToDays} from "utils/dateUtils";
 import {weightedAverage} from "utils/math";
 import {mapMap, mapToEntries, windowed} from "utils/collections";
 
-
 export interface SuggestionService {
   suggestions: () => Promise<Suggestion[]>
 }
@@ -31,7 +30,6 @@ export function createSuggestionService(orderDao: OrderDao): SuggestionService {
   }
 
   /**
-   *
    *
    * @param deliveryDate Delivery date for current order
    * @param itemsOrderHistory Order history for each item

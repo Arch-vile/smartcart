@@ -7,7 +7,7 @@
     "compile": "npm run clean && ttsc --build",
     "bundle": "npm run clean && ttsc --build && browserify dist/bookmarklet.js -o public/smartcart-bundle.js -t [ babelify --presets [ @babel/preset-env @babel/preset-react ] --plugins [ @babel/plugin-proposal-class-properties ] ]",
     "clean": "ttsc --build --clean",
-    "test": "ts-node src/smartcart.spec.ts"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -31,7 +31,9 @@
     "@babel/plugin-proposal-class-properties": "^7.16.7",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-react": "^7.16.7",
+    "@types/jest": "^27.4.1",
     "babelify": "^10.0.0",
+    "ts-jest": "^27.1.4",
     "tsconfig-paths": "^3.14.1"
   }
 }

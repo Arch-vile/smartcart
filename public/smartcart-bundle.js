@@ -4,15 +4,156 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.createOrderClient = void 0;
+
+var _dateUtils = require("../utils/dateUtils");
+
+var _models = require("../core/domain/models");
+
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var createOrderClient = function createOrderClient() {
+  return {
+    orderById: fetchOrder,
+    orderHistory: fetchOrderListing
+  };
+  /**
+   * Return latest orders (about 20) in ascending order (by date) and the closest upcoming order.
+   */
+
+  function fetchOrderListing() {
+    return __awaiter(this, void 0, void 0, /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var url;
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              url = 'https://www.k-ruoka.fi/kr-api/shoppinghistory?offset=0&includeItems=true';
+              return _context.abrupt("return", fetch(url).then(function (resp) {
+                return resp.json();
+              }).then(function (payload) {
+                var orders = payload.data.map(function (orderJson) {
+                  var order = {
+                    orderStatus: orderStatusFrom(orderJson),
+                    id: orderJson.orderId,
+                    deliveryAt: (0, _dateUtils.dateFrom)(orderJson.deliveryTime.deliveryStart)
+                  };
+                  return order;
+                }).sort(function (a, b) {
+                  return a.deliveryAt.getTime() - b.deliveryAt.getTime();
+                });
+                var nextOrders = orders.filter(function (order) {
+                  return order.orderStatus === 'ORDER_RECEIVED';
+                });
+                var previous = orders.filter(function (order) {
+                  return order.orderStatus === 'ORDER_PROCESSED';
+                });
+                return {
+                  previous: previous,
+                  current: nextOrders.length !== 0 ? nextOrders[0] : null
+                };
+              }));
+
+            case 2:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    }));
+  }
+
+  function fetchOrder(orderId) {
+    return __awaiter(this, void 0, void 0, /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+      var url;
+      return regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              url = "https://www.k-ruoka.fi/kr-api/shoppinghistory/".concat(orderId, "?updatePricing=0");
+              return _context2.abrupt("return", fetch(url).then(function (data) {
+                return data.json();
+              }).then(function (json) {
+                return {
+                  info: {
+                    id: json.orderId,
+                    orderStatus: orderStatusFrom(json.orderStatus),
+                    deliveryAt: (0, _dateUtils.dateFrom)(json.deliveryTime.deliveryEnd)
+                  },
+                  items: json.items.map(function (jsonItem) {
+                    var item = {
+                      name: jsonItem.name
+                    };
+                    return item;
+                  })
+                };
+              }));
+
+            case 2:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2);
+    }));
+  }
+
+  function orderStatusFrom(orderJson) {
+    if ((0, _models.isKnownOrderStatus)(orderJson.orderStatus)) {
+      return orderJson.orderStatus;
+    } else {
+      return 'UNKNOWN';
+    }
+  }
+};
+
+exports.createOrderClient = createOrderClient;
+
+},{"../core/domain/models":4,"../utils/dateUtils":7}],2:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 exports.runBookmarklet = runBookmarklet;
 
-var _ordersClient = require("./integrations/ordersClient");
+var _ordersHttpClient = require("./adapters/ordersHttpClient");
 
-var _suggestionService = require("./core/ports/exported/suggestionService");
+var _suggestionService = require("./core/ports/in/suggestionService");
 
 // Called from the bookmarklet bookmark, the entry point
 function runBookmarklet() {
-  var dao = (0, _ordersClient.createOrderClient)();
+  var dao = (0, _ordersHttpClient.createOrderClient)();
   var suggestionService = (0, _suggestionService.createSuggestionService)(dao);
   var suggestions = suggestionService.suggestions();
   suggestions.then(function (proposals) {
@@ -65,7 +206,7 @@ function updateUI(itemsForNextOrder) {
   }
 }
 
-},{"./core/ports/exported/suggestionService":4,"./integrations/ordersClient":5}],2:[function(require,module,exports){
+},{"./adapters/ordersHttpClient":1,"./core/ports/in/suggestionService":5}],3:[function(require,module,exports){
 "use strict";
 
 var _app = require("./app");
@@ -73,7 +214,7 @@ var _app = require("./app");
 // Attach to the window to make available on page from the Browserified bundle
 window.runSmartcartBookmarklet = _app.runBookmarklet;
 
-},{"./app":1}],3:[function(require,module,exports){
+},{"./app":2}],4:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -86,7 +227,7 @@ function isKnownOrderStatus(maybe) {
   return typeof maybe === 'string' && knownStatusTypes.includes(maybe);
 }
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -192,7 +333,6 @@ function createSuggestionService(orderDao) {
     }));
   }
   /**
-   *
    *
    * @param deliveryDate Delivery date for current order
    * @param itemsOrderHistory Order history for each item
@@ -377,148 +517,7 @@ function shouldPropose(deliveryDate, itemLastOrderDate, itemFrequency, previousO
   return foo.length === 0;
 }
 
-},{"../../../utils/collections":6,"../../../utils/dateUtils":7,"../../../utils/math":8}],5:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.createOrderClient = void 0;
-
-var _dateUtils = require("../utils/dateUtils");
-
-var _models = require("../core/models/models");
-
-var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
-  function adopt(value) {
-    return value instanceof P ? value : new P(function (resolve) {
-      resolve(value);
-    });
-  }
-
-  return new (P || (P = Promise))(function (resolve, reject) {
-    function fulfilled(value) {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-
-    function rejected(value) {
-      try {
-        step(generator["throw"](value));
-      } catch (e) {
-        reject(e);
-      }
-    }
-
-    function step(result) {
-      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-    }
-
-    step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
-};
-
-var createOrderClient = function createOrderClient() {
-  return {
-    orderById: fetchOrder,
-    orderHistory: fetchOrderListing
-  };
-  /**
-   * Return latest orders (about 20) in ascending order (by date) and the closest upcoming order.
-   */
-
-  function fetchOrderListing() {
-    return __awaiter(this, void 0, void 0, /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-      var url;
-      return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              url = 'https://www.k-ruoka.fi/kr-api/shoppinghistory?offset=0&includeItems=true';
-              return _context.abrupt("return", fetch(url).then(function (resp) {
-                return resp.json();
-              }).then(function (payload) {
-                var orders = payload.data.map(function (orderJson) {
-                  var order = {
-                    orderStatus: orderStatusFrom(orderJson),
-                    id: orderJson.orderId,
-                    deliveryAt: (0, _dateUtils.dateFrom)(orderJson.deliveryTime.deliveryStart)
-                  };
-                  return order;
-                }).sort(function (a, b) {
-                  return a.deliveryAt.getTime() - b.deliveryAt.getTime();
-                });
-                var nextOrders = orders.filter(function (order) {
-                  return order.orderStatus === 'ORDER_RECEIVED';
-                });
-                var previous = orders.filter(function (order) {
-                  return order.orderStatus === 'ORDER_PROCESSED';
-                });
-                return {
-                  previous: previous,
-                  current: nextOrders.length !== 0 ? nextOrders[0] : null
-                };
-              }));
-
-            case 2:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee);
-    }));
-  }
-
-  function fetchOrder(orderId) {
-    return __awaiter(this, void 0, void 0, /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-      var url;
-      return regeneratorRuntime.wrap(function _callee2$(_context2) {
-        while (1) {
-          switch (_context2.prev = _context2.next) {
-            case 0:
-              url = "https://www.k-ruoka.fi/kr-api/shoppinghistory/".concat(orderId, "?updatePricing=0");
-              return _context2.abrupt("return", fetch(url).then(function (data) {
-                return data.json();
-              }).then(function (json) {
-                return {
-                  info: {
-                    id: json.orderId,
-                    orderStatus: orderStatusFrom(json.orderStatus),
-                    deliveryAt: (0, _dateUtils.dateFrom)(json.deliveryTime.deliveryEnd)
-                  },
-                  items: json.items.map(function (jsonItem) {
-                    var item = {
-                      name: jsonItem.name
-                    };
-                    return item;
-                  })
-                };
-              }));
-
-            case 2:
-            case "end":
-              return _context2.stop();
-          }
-        }
-      }, _callee2);
-    }));
-  }
-
-  function orderStatusFrom(orderJson) {
-    if ((0, _models.isKnownOrderStatus)(orderJson.orderStatus)) {
-      return orderJson.orderStatus;
-    } else {
-      return 'UNKNOWN';
-    }
-  }
-};
-
-exports.createOrderClient = createOrderClient;
-
-},{"../core/models/models":3,"../utils/dateUtils":7}],6:[function(require,module,exports){
+},{"../../../utils/collections":6,"../../../utils/dateUtils":7,"../../../utils/math":8}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -614,4 +613,4 @@ function weightedAverage(from) {
   return result.sum / result.count;
 }
 
-},{}]},{},[2]);
+},{}]},{},[3]);
