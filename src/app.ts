@@ -6,6 +6,7 @@ import {Suggestion} from "core/domain/models";
 
 // Called from the bookmarklet bookmark, the entry point
 export function runBookmarklet() {
+    console.log('starting bookmarklet')
   let dao = createOrderClient();
   const suggestionService = createSuggestionService(dao);
   const suggestions = suggestionService.suggestions();

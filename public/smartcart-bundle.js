@@ -58,6 +58,7 @@ var createOrderClient = function createOrderClient() {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
+              console.log("fetching orders");
               url = 'https://www.k-ruoka.fi/kr-api/shoppinghistory?offset=0&includeItems=true';
               return _context.abrupt("return", fetch(url).then(function (resp) {
                 return resp.json();
@@ -84,7 +85,7 @@ var createOrderClient = function createOrderClient() {
                 };
               }));
 
-            case 2:
+            case 3:
             case "end":
               return _context.stop();
           }
@@ -153,6 +154,7 @@ var _suggestionService = require("./core/ports/in/suggestionService");
 
 // Called from the bookmarklet bookmark, the entry point
 function runBookmarklet() {
+  console.log('starting bookmarklet');
   var dao = (0, _ordersHttpClient.createOrderClient)();
   var suggestionService = (0, _suggestionService.createSuggestionService)(dao);
   var suggestions = suggestionService.suggestions();
@@ -220,8 +222,13 @@ window.runSmartcartBookmarklet = _app.runBookmarklet;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.asOrderId = asOrderId;
 exports.isKnownOrderStatus = isKnownOrderStatus;
 var knownStatusTypes = ['ORDER_RECEIVED', 'ORDER_PROCESSED'];
+
+function asOrderId(id) {
+  return id;
+}
 
 function isKnownOrderStatus(maybe) {
   return typeof maybe === 'string' && knownStatusTypes.includes(maybe);

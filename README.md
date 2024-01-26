@@ -3,7 +3,7 @@
 ## Building
 
 To create a bundle (`./public/smartcart-bundle.js`) for browser (with Browserify):
-`npm run build`
+`npm run bundle`
 
 ## Running manually
 

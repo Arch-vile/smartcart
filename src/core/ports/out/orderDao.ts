@@ -1,6 +1,6 @@
-import {Order, OrderInfo, OrderListing} from "core/domain/models";
+import {Order, OrderId, OrderInfo, OrderListing} from "core/domain/models";
 
 export interface OrderDao {
-  orderById: (id: string) => Promise<Order>,
+  orderById: (id: OrderId) => Promise<Order>,
   orderHistory: () => Promise<OrderListing>
 }

@@ -12,3 +12,4 @@ export function dateAsMillis(date: Date): number {
 export function daysAsMillis(days: number): number {
   return days * 86400 * 1000;
 }
+

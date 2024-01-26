@@ -6,8 +6,13 @@ const knownStatusTypes = ['ORDER_RECEIVED', 'ORDER_PROCESSED'] as const;
 export type KnownStatusTypes = typeof knownStatusTypes[number];
 export type OrderStatus = KnownStatusTypes | 'UNKNOWN';
 
+export type OrderId = string & { __type: "orderId"}
+export function asOrderId(id: string) {
+  return id as OrderId;
+}
+
 export interface OrderInfo {
-  id: string
+  id: OrderId
   orderStatus: OrderStatus
   deliveryAt: Date
 }

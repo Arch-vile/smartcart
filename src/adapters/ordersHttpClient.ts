@@ -19,6 +19,7 @@ export const createOrderClient = (): OrderDao => {
    * Return latest orders (about 20) in ascending order (by date) and the closest upcoming order.
    */
   async function fetchOrderListing(): Promise<OrderListing> {
+      console.log("fetching orders");
     const url = 'https://www.k-ruoka.fi/kr-api/shoppinghistory?offset=0&includeItems=true';
     return fetch(url)
     .then(resp => resp.json())
