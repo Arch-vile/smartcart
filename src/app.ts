@@ -1,10 +1,9 @@
-import {
-  createOrderClient
-} from "adapters/ordersHttpClient";
-import {createSuggestionService} from "core/ports/in/suggestionService";
-import {Suggestion} from "core/domain/models";
 
 // Called from the bookmarklet bookmark, the entry point
+import {createOrderClient} from "./adapters/ordersHttpClient";
+import {createSuggestionService} from "./core/ports/in/suggestionService";
+import {Suggestion} from "./core/domain/models";
+
 export function runBookmarklet() {
     console.log('starting bookmarklet')
   let dao = createOrderClient();

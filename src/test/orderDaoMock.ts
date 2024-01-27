@@ -1,5 +1,5 @@
-import {OrderDao} from "core/ports/out/orderDao";
-import {Order, OrderId, OrderInfo, OrderListing, OrderStatus} from "core/domain/models";
+import {OrderDao} from "../core/ports/out/orderDao";
+import {Order, OrderId, OrderInfo, OrderListing, OrderStatus} from "../core/domain/models";
 
 export interface OrderDaoMock extends OrderDao {
   setupOrder(deliveryDate: string, orderStatus: OrderStatus): Order;

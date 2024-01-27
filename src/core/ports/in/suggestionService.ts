@@ -1,8 +1,8 @@
-import {Order, OrderInfo, Suggestion} from "core/domain/models";
-import {OrderDao} from "core/ports/out/orderDao";
-import {dateAsMillis, daysAsMillis, millisToDays} from "utils/dateUtils";
-import {weightedAverage} from "utils/math";
-import {mapMap, mapToEntries, windowed} from "utils/collections";
+import {Order, OrderInfo, Suggestion} from "../../domain/models";
+import {OrderDao} from "../out/orderDao";
+import {mapMap, mapToEntries, windowed} from "../../../utils/collections";
+import {weightedAverage} from "../../../utils/math";
+import {dateAsMillis, daysAsMillis, millisToDays} from "../../../utils/dateUtils";
 
 export interface SuggestionService {
   suggestions: () => Promise<Suggestion[]>
