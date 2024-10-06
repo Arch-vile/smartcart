@@ -4,6 +4,9 @@ Better suggestions for KRuoka grocery list items.
 
 ## High-level architecture
 
+<img width="1311" alt="image" src="https://github.com/user-attachments/assets/d944a784-9035-48fd-b1ff-b4c3fea9cc76">
+
+
 The gist:
 - "capture" Scheduled run to capture the data of previous orders and to store to db
 - "analysis" Scheduled run to calculate the suggestions.
